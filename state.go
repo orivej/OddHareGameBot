@@ -31,6 +31,17 @@ func (cs *ChatState) AddPlayer(user *tb.User) bool {
 	return true
 }
 
+func (cs *ChatState) RemovePlayer(user *tb.User) bool {
+	for i, player := range cs.Players {
+		if user.ID == player.ID {
+			copy(cs.Players[i:], cs.Players[i+1:])
+			cs.Players = cs.Players[:len(cs.Players)-1]
+			return true
+		}
+	}
+	return false
+}
+
 var EscapeHTML = strings.NewReplacer(`<`, "&lt;", `>`, "&gt;", `&`, "&amp;").Replace
 
 func (cs *ChatState) PlayerHTML(user *tb.User) string {

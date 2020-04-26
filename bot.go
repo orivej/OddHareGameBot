@@ -21,8 +21,9 @@ type Bot struct {
 	*tb.Bot
 	Chats ChatStateMap
 
-	BtnJoin tb.InlineButton
-	BtnPlay tb.InlineButton
+	BtnJoin  tb.InlineButton
+	BtnLeave tb.InlineButton
+	BtnPlay  tb.InlineButton
 }
 
 func NewBot(b *tb.Bot) *Bot {
@@ -31,11 +32,13 @@ func NewBot(b *tb.Bot) *Bot {
 
 func (b *Bot) Setup() {
 	b.BtnJoin = tb.InlineButton{Unique: "join", Text: "Вступить"}
+	b.BtnLeave = tb.InlineButton{Unique: "leave", Text: "Выйти"}
 	b.BtnPlay = tb.InlineButton{Unique: "play", Text: "Играть"}
 	b.Handle("/start", b.OnStart)
 	b.Handle(tb.OnAddedToGroup, b.OnStart)
 	b.Handle("/hare", b.OnHare)
 	b.Handle(&b.BtnJoin, b.OnBtnJoin)
+	b.Handle(&b.BtnLeave, b.OnBtnLeave)
 	b.Handle(&b.BtnPlay, b.OnBtnPlay)
 }
 
@@ -71,7 +74,7 @@ func (b *Bot) OnHare(m *tb.Message) {
 
 func (b *Bot) ChatStateMessage(cs *ChatState) (what string, options []interface{}) {
 	return cs.Describe(), []interface{}{tb.ModeHTML, tb.NoPreview, &tb.ReplyMarkup{
-		InlineKeyboard: [][]tb.InlineButton{{b.BtnJoin, b.BtnPlay}},
+		InlineKeyboard: [][]tb.InlineButton{{b.BtnJoin, b.BtnLeave, b.BtnPlay}},
 	}}
 }
 
@@ -110,6 +113,17 @@ func (b *Bot) OnBtnJoin(c *tb.Callback) {
 	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if cs.AddPlayer(c.Sender) {
+		b.UpdateChatState(cs)
+	}
+}
+func (b *Bot) OnBtnLeave(c *tb.Callback) {
+	m := c.Message
+	if b.replyObselete(m) {
+		return
+	}
+	cs, unlock := b.Chats.Get(m.Chat.ID)
+	defer unlock()
+	if cs.RemovePlayer(c.Sender) {
 		b.UpdateChatState(cs)
 	}
 }
