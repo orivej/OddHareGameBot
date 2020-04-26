@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/orivej/e"
@@ -14,22 +13,20 @@ import (
 
 const gameLifetime = 6 * time.Hour
 
+type ChatStateMap interface {
+	Get(chatID int64) (*ChatState, func())
+}
+
 type Bot struct {
 	*tb.Bot
-	Chats sync.Map
+	Chats ChatStateMap
 
 	BtnJoin tb.InlineButton
 	BtnPlay tb.InlineButton
 }
 
 func NewBot(b *tb.Bot) *Bot {
-	return &Bot{Bot: b}
-}
-
-func (b *Bot) LockedChatState(chatID int64) *ChatState {
-	cs, _ := b.Chats.LoadOrStore(chatID, NewChatState())
-	cs.(*ChatState).Lock()
-	return cs.(*ChatState)
+	return &Bot{Bot: b, Chats: NewLocalChatStateMap()}
 }
 
 func (b *Bot) Setup() {
@@ -60,8 +57,8 @@ func (b *Bot) OnHare(m *tb.Message) {
 		b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 		return
 	}
-	cs := b.LockedChatState(m.Chat.ID)
-	defer cs.Unlock()
+	cs, unlock := b.Chats.Get(m.Chat.ID)
+	defer unlock()
 	if cs.Last != nil {
 		// Delete keyboard.
 		_, err := b.EditReplyMarkup(cs.Last, &tb.ReplyMarkup{})
@@ -110,8 +107,8 @@ func (b *Bot) OnBtnJoin(c *tb.Callback) {
 	if b.replyObselete(m) {
 		return
 	}
-	cs := b.LockedChatState(m.Chat.ID)
-	defer cs.Unlock()
+	cs, unlock := b.Chats.Get(m.Chat.ID)
+	defer unlock()
 	if cs.AddPlayer(c.Sender) {
 		b.UpdateChatState(cs)
 	}
@@ -122,8 +119,8 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 	if b.replyObselete(m) {
 		return
 	}
-	cs := b.LockedChatState(m.Chat.ID)
-	defer cs.Unlock()
+	cs, unlock := b.Chats.Get(m.Chat.ID)
+	defer unlock()
 	if len(cs.Players) == 0 {
 		_, err := b.Reply(cs.Last, msgNoPlayers)
 		e.Print(err)

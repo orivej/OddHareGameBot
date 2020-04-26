@@ -3,20 +3,14 @@ package main
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 type ChatState struct {
-	sync.Mutex
 	Last    *tb.Message
 	Players []*tb.User
 	Words   []string
-}
-
-func NewChatState() *ChatState {
-	return &ChatState{}
 }
 
 func (cs *ChatState) Reset() {
