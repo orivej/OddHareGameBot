@@ -1,7 +1,12 @@
 package ddb
 
 import (
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	ddba "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -13,12 +18,11 @@ type DDBChatStateMap struct {
 	*dynamodb.DynamoDB
 	Table string
 }
-type DDBChatStateMapItemKey struct{ ID int64 }
 type DDBChatStateMapItem struct {
-	ID     int64
-	TTL    ddba.UnixTime // Time at which DDB can erase this item.
-	Locked ddba.UnixTime // Time until which this item is locked by the handler, or 0.
-	Data   []byte
+	ID      int64
+	Expired time.Time `dynamodbav:",unixtime"` // Time at which DDB can erase this item.
+	Locked  time.Time `dynamodbav:",unixtime"` // Time until which this item is locked by the handler, or 0.
+	CS      string
 }
 
 func NewDDBChatStateMap(table string) DDBChatStateMap {
@@ -29,27 +33,72 @@ func NewDDBChatStateMap(table string) DDBChatStateMap {
 }
 
 func (ddb DDBChatStateMap) Get(chatID int64) (*chatstate.ChatState, func()) {
-	result, err := ddb.GetItem(&dynamodb.GetItemInput{
-		ConsistentRead: aws.Bool(true),
-		TableName:      aws.String(ddb.Table),
-		Key:            MarshalKey(chatID),
-	})
-	e.Exit(err)
-	item := DDBChatStateMapItem{}
-	err = ddba.UnmarshalMap(result.Item, &item)
-	av, err := ddba.MarshalMap(item)
-	e.Exit(err)
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(ddb.Table),
-		Item:      av,
+	var result *dynamodb.UpdateItemOutput
+	var err error
+	for {
+		now := time.Now()
+		params := struct {
+			Now     time.Time `dynamodbav:":Now,unixtime"`
+			Expired time.Time `dynamodbav:":Expired,unixtime"`
+			Locked  time.Time `dynamodbav:":Locked,unixtime"`
+		}{now, now.Add(chatstate.Lifetime), now.Add(chatstate.Locktime)}
+		cexpr := "attribute_not_exists(ID) OR Locked < :Now"
+		uexpr := "set Expired = :Expired, Locked = :Locked"
+		result, err = ddb.UpdateItem(&dynamodb.UpdateItemInput{
+			TableName:                 &ddb.Table,
+			Key:                       MarshalKey(chatID),
+			ConditionExpression:       &cexpr,
+			UpdateExpression:          &uexpr,
+			ExpressionAttributeValues: MarshalMap(&params),
+			ReturnValues:              aws.String(dynamodb.ReturnValueAllNew),
+		})
+		if err == nil {
+			break
+		}
+		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
+			fmt.Println(result)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		e.Print(err)
+		return nil, nil
 	}
-	_, err = ddb.PutItem(input)
+
+	item := &DDBChatStateMapItem{}
+	err = ddba.UnmarshalMap(result.Attributes, item)
 	e.Exit(err)
-	return nil, func() {}
+	cs := &chatstate.ChatState{}
+	if len(item.CS) > 0 {
+		err = json.Unmarshal([]byte(item.CS), cs)
+		e.Exit(err)
+	}
+	return cs, func() { ddb.Unlock(chatID, cs) }
+}
+
+func (ddb DDBChatStateMap) Unlock(chatID int64, cs *chatstate.ChatState) {
+	data, err := json.Marshal(cs)
+	e.Exit(err)
+	now := time.Now()
+	params := struct {
+		Now     time.Time `dynamodbav:":Now,unixtime"`
+		Expired time.Time `dynamodbav:":Expired,unixtime"`
+		Locked  int       `dynamodbav:":Locked"`
+		CS      string    `dynamodbav:":CS"`
+	}{now, now.Add(chatstate.Lifetime), 0, string(data)}
+	cexpr := "attribute_not_exists(ID) OR Locked >= :Now"
+	uexpr := "set Expired = :Expired, Locked = :Locked, CS = :CS"
+	_, err = ddb.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName:                 &ddb.Table,
+		Key:                       MarshalKey(chatID),
+		ConditionExpression:       &cexpr,
+		UpdateExpression:          &uexpr,
+		ExpressionAttributeValues: MarshalMap(&params),
+	})
+	e.Print(err)
 }
 
 func MarshalKey(chatID int64) map[string]*dynamodb.AttributeValue {
-	return MarshalMap(DDBChatStateMapItemKey{chatID})
+	return MarshalMap(struct{ ID int64 }{chatID})
 }
 
 func MarshalMap(in interface{}) map[string]*dynamodb.AttributeValue {

@@ -144,7 +144,7 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if len(cs.Players) == 0 {
-		_, err := b.Reply(cs.Last, msgNoPlayers)
+		_, err := b.Reply(m, msgNoPlayers)
 		e.Print(err)
 		return
 	}
