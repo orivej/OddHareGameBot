@@ -13,8 +13,6 @@ import (
 
 //const errForbidden = "Forbidden: bot can't initiate conversation with a user"
 
-const gameLifetime = 6 * time.Hour
-
 type ChatStateMap interface {
 	Get(chatID int64) (*chatstate.ChatState, func())
 }
@@ -105,7 +103,7 @@ func (b *Bot) UpdateChatState(cs *chatstate.ChatState) {
 }
 
 func (b *Bot) replyObselete(m *tb.Message) bool {
-	if time.Now().Before(m.Time().Add(gameLifetime)) {
+	if time.Now().Before(m.Time().Add(chatstate.Lifetime)) {
 		return false
 	}
 	_, err := b.Reply(m, msgObsolete)

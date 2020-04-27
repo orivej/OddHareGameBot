@@ -1,8 +1,12 @@
 package chatstate
 
 import (
+	"time"
+
 	tb "gopkg.in/tucnak/telebot.v2"
 )
+
+const Lifetime = 6 * time.Hour
 
 type ChatState struct {
 	Last    *tb.Message
