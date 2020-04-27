@@ -2,13 +2,13 @@ package bot
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/orivej/OddHareGameBot/bot/chatstate"
 	"github.com/orivej/OddHareGameBot/bot/chatstate/ddb"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"lukechampine.com/frand"
 )
 
 //const errForbidden = "Forbidden: bot can't initiate conversation with a user"
@@ -150,11 +150,11 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 		e.Print(err)
 		return
 	}
-	rand.Shuffle(len(cs.Players), func(i, j int) {
+	frand.Shuffle(len(cs.Players), func(i, j int) {
 		cs.Players[i], cs.Players[j] = cs.Players[j], cs.Players[i]
 	})
-	hare := cs.Players[rand.Intn(len(cs.Players))]
-	word := cs.Words[rand.Intn(len(cs.Words))]
+	hare := cs.Players[frand.Intn(len(cs.Players))]
+	word := cs.Words[frand.Intn(len(cs.Words))]
 	var failed []*tb.User
 	for _, player := range cs.Players {
 		msg := word

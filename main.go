@@ -33,7 +33,6 @@ func main() {
 		fmt.Println("error: missing -token or $" + envToken)
 		os.Exit(1)
 	}
-	seed()
 
 	p := tb.Poller(NoPoller{})
 	if *flPoll {
