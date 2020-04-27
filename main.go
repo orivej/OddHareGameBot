@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/orivej/OddHareGameBot/bot"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
@@ -44,7 +45,7 @@ func main() {
 
 	b, err := tb.NewBot(tb.Settings{Token: *flToken, Poller: p})
 	e.Exit(err)
-	NewBot(b, *flName, *flLocal, *flTable).Setup()
+	bot.NewBot(b, *flName, *flLocal, *flTable).Setup()
 	if !*flPoll {
 		lambda.Start(func(u tb.Update) error {
 			b.Updates <- u

@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	ddba "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/orivej/OddHareGameBot/chatstate"
+	"github.com/orivej/OddHareGameBot/bot/chatstate"
 	"github.com/orivej/e"
 )
 

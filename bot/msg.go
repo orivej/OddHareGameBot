@@ -1,4 +1,4 @@
-package main
+package bot
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/orivej/OddHareGameBot/chatstate"
+	"github.com/orivej/OddHareGameBot/bot/chatstate"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
 )

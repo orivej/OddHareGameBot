@@ -1,12 +1,12 @@
-package main
+package bot
 
 import (
 	"fmt"
 	"math/rand"
 	"time"
 
-	"github.com/orivej/OddHareGameBot/chatstate"
-	"github.com/orivej/OddHareGameBot/ddb"
+	"github.com/orivej/OddHareGameBot/bot/chatstate"
+	"github.com/orivej/OddHareGameBot/bot/chatstate/ddb"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
 )

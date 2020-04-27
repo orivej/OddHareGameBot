@@ -1,9 +1,9 @@
-package main
+package bot
 
 import (
 	"sync"
 
-	"github.com/orivej/OddHareGameBot/chatstate"
+	"github.com/orivej/OddHareGameBot/bot/chatstate"
 )
 
 type LocalChatStateMap struct{ sync.Map }
