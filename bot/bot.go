@@ -100,23 +100,39 @@ func (b *Bot) UpdateChatState(cs *chatstate.ChatState) {
 	e.Print(err)
 }
 
-func (b *Bot) replyObselete(m *tb.Message) bool {
+func (b *Bot) checkObselete(m *tb.Message) bool {
 	if time.Now().Before(m.Time().Add(chatstate.Lifetime)) {
 		return false
 	}
+	b.replyObselete(m)
+	return true
+}
+
+func (b *Bot) replyObselete(m *tb.Message) {
 	_, err := b.Reply(m, msgObsolete)
 	e.Print(err)
 	_, err = b.EditReplyMarkup(m, &tb.ReplyMarkup{}) // Delete old keyboard.
 	e.Print(err)
-	return true
+}
+
+func (b *Bot) chatState(m *tb.Message) (cs *chatstate.ChatState, unlock func()) {
+	if !b.checkObselete(m) {
+		cs, unlock = b.Chats.Get(m.Chat.ID)
+		if cs == nil || cs.Last == nil || cs.Last.ID != m.ID {
+			b.replyObselete(m)
+			unlock()
+			return nil, nil
+		}
+	}
+	return
 }
 
 func (b *Bot) OnBtnJoin(c *tb.Callback) {
 	m := c.Message
-	if b.replyObselete(m) {
+	cs, unlock := b.chatState(m)
+	if cs == nil {
 		return
 	}
-	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if cs.AddPlayer(c.Sender) {
 		b.UpdateChatState(cs)
@@ -124,10 +140,10 @@ func (b *Bot) OnBtnJoin(c *tb.Callback) {
 }
 func (b *Bot) OnBtnLeave(c *tb.Callback) {
 	m := c.Message
-	if b.replyObselete(m) {
+	cs, unlock := b.chatState(m)
+	if cs == nil {
 		return
 	}
-	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if cs.RemovePlayer(c.Sender) {
 		b.UpdateChatState(cs)
@@ -136,10 +152,10 @@ func (b *Bot) OnBtnLeave(c *tb.Callback) {
 
 func (b *Bot) OnBtnPlay(c *tb.Callback) {
 	m := c.Message
-	if b.replyObselete(m) {
+	cs, unlock := b.chatState(m)
+	if cs == nil {
 		return
 	}
-	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if len(cs.Players) == 0 {
 		_, err := b.Reply(m, msgNoPlayers)
