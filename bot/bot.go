@@ -11,8 +11,6 @@ import (
 	"lukechampine.com/frand"
 )
 
-//const errForbidden = "Forbidden: bot can't initiate conversation with a user"
-
 type ChatStateMap interface {
 	Get(chatID int64) (*chatstate.ChatState, func())
 }
@@ -161,7 +159,9 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 		}
 		_, err := b.Send(player, msg)
 		if err != nil {
-			e.Print(err)
+			if !(err == tb.ErrNotStartedByUser || err == tb.ErrBlockedByUser) {
+				e.Print(err)
+			}
 			failed = append(failed, player)
 		}
 	}
