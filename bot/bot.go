@@ -54,14 +54,14 @@ func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*
 }
 
 func (b *Bot) OnStart(m *tb.Message) {
-	msg := render("Start", b.Name, m.Chat.Type == tb.ChatPrivate)
+	msg := renderHelp("Start", b.Name, m.Chat.Type == tb.ChatPrivate)
 	b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 }
 
 func (b *Bot) OnHare(m *tb.Message) {
 	words := parseWords(m.Text)
 	if len(words) == 0 {
-		msg := render("Words", b.Name, m.Chat.Type == tb.ChatPrivate)
+		msg := renderHelp("Words", b.Name, m.Chat.Type == tb.ChatPrivate)
 		b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 		return
 	}
@@ -166,7 +166,7 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 		}
 	}
 	if len(failed) > 0 {
-		msg := fmt.Sprintf(fmtUndelievered, joinWithAnd(PlayersHTML(cs, failed)), b.Name)
+		msg := renderUndelievered(PlayersHTML(cs, failed), b.Name)
 		b.Post(m.Chat, msg, tb.ModeHTML, tb.NoPreview)
 		return
 	}

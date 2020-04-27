@@ -11,19 +11,21 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-type ctxStart struct {
-	BotName string
-	Private bool
-}
+const msgObsolete = "Эта игра устарела, начните новую! /hare"
+const msgNoPlayers = "В игре нет игроков."
+const msgYouAreHare = "Ты заяц!"
+const fmtPlayStarted = "Теперь каждый по очереди называет ассоциацию: %s."
 
-var tmplStart = template.Must(template.New("").Parse(`
+var tmplFuncs = template.FuncMap{"num": num, "plu": plu, "joinWithAnd": joinWithAnd}
+
+var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 {{ define "hello" -}}
 Привет! Я помощник для игры в [Зайца](https://boardgamegeek.com/boardgame/227072/chameleon)!
 {{- end -}}
 
 {{ define "Words" -}}
 	{{- if .Private -}}
-		Добавьте меня в группу и напишите {{""}}
+		Добавь меня в группу и напиши {{""}}
 	{{- else -}}
 		Напишите {{""}}
         {{- end -}}
@@ -45,25 +47,7 @@ var tmplStart = template.Must(template.New("").Parse(`
 {{- template "add" . -}}
 {{- end -}}
 
-`))
-
-func render(t, bot string, private bool) string {
-	var buf bytes.Buffer
-	err := tmplStart.ExecuteTemplate(&buf, t, ctxStart{BotName: bot, Private: private})
-	e.Exit(err)
-	return buf.String()
-}
-
-const msgObsolete = "Эта игра устарела, начните новую!"
-const msgNoPlayers = "В игре нет игроков."
-const msgYouAreHare = "Ты заяц!"
-
-const fmtUndelievered = `%s, я не могу вам писать! <a href="https://t.me/%s">Добавьте</a> меня в свои контакты!`
-const fmtPlayStarted = "Теперь каждый по очереди называет ассоциацию: %s."
-
-type ctxChatState struct{ Players, Words []string }
-
-var tmplChatState = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
+{{ define "ChatState" -}}
 У меня {{ num (len .Words) "слов" "слово" "слова" }}. {{""}}
 {{- if .Players -}}
 {{ plu (len .Players) "Играет" "Играют" }} {{ joinWithAnd .Players }}. {{""}}
@@ -71,16 +55,41 @@ var tmplChatState = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 Ещё никто не играет. {{""}}
 {{- end -}}
 Присоединяйтесь!
+{{- end -}}
+
+{{ define "Undelivered" -}}
+{{ joinWithAnd .Players }}, я не могу
+{{- if eq 1 (len .Players) }} тебе {{ else }} вам {{ end -}}
+писать! <a href="https://t.me/{{ .BotName }}">Добавь
+{{- if ne 1 (len .Players) }}те{{ end -}}
+</a> меня в свои контакты!
+{{- end -}}
 `))
 
-func renderChatState(players, words []string) string {
+func render(name string, ctx interface{}) string {
 	var buf bytes.Buffer
-	err := tmplChatState.Execute(&buf, ctxChatState{Players: players, Words: words})
+	err := tmpl.ExecuteTemplate(&buf, name, ctx)
 	e.Exit(err)
 	return buf.String()
 }
 
-var tmplFuncs = template.FuncMap{"num": num, "plu": plu, "joinWithAnd": joinWithAnd}
+func renderHelp(t, bot string, private bool) string {
+	return render(t, struct {
+		BotName string
+		Private bool
+	}{bot, private})
+}
+
+func renderChatState(players, words []string) string {
+	return render("ChatState", struct{ Players, Words []string }{players, words})
+}
+
+func renderUndelievered(players []string, bot string) string {
+	return render("Undelivered", struct {
+		Players []string
+		BotName string
+	}{players, bot})
+}
 
 func num(x int, zero, one, two string) string {
 	word := zero
