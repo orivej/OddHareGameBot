@@ -1,6 +1,7 @@
 package ddb
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	ddba "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/klauspost/compress/zstd"
 	"github.com/orivej/OddHareGameBot/bot/chatstate"
 	"github.com/orivej/e"
 )
@@ -22,7 +24,7 @@ type DDBChatStateMapItem struct {
 	ID      int64
 	Expired time.Time `dynamodbav:",unixtime"` // Time at which DDB can erase this item.
 	Locked  time.Time `dynamodbav:",unixtime"` // Time until which this item is locked by the handler, or 0.
-	CS      string
+	CS      []byte
 }
 
 func NewDDBChatStateMap(table string) DDBChatStateMap {
@@ -69,22 +71,30 @@ func (ddb DDBChatStateMap) Get(chatID int64) (*chatstate.ChatState, func()) {
 	e.Exit(err)
 	cs := &chatstate.ChatState{}
 	if len(item.CS) > 0 {
-		err = json.Unmarshal([]byte(item.CS), cs)
+		r, err := zstd.NewReader(bytes.NewBuffer(item.CS))
 		e.Exit(err)
+		err = json.NewDecoder(r).Decode(cs)
+		e.Exit(err)
+		r.Close()
 	}
 	return cs, func() { ddb.Unlock(chatID, cs) }
 }
 
 func (ddb DDBChatStateMap) Unlock(chatID int64, cs *chatstate.ChatState) {
-	data, err := json.Marshal(cs)
+	var buf bytes.Buffer
+	w, err := zstd.NewWriter(&buf)
+	e.Exit(err)
+	err = json.NewEncoder(w).Encode(cs)
+	e.Exit(err)
+	err = w.Close()
 	e.Exit(err)
 	now := time.Now()
 	params := struct {
 		Now     time.Time `dynamodbav:":Now,unixtime"`
 		Expired time.Time `dynamodbav:":Expired,unixtime"`
 		Locked  int       `dynamodbav:":Locked"`
-		CS      string    `dynamodbav:":CS"`
-	}{now, now.Add(chatstate.Lifetime), 0, string(data)}
+		CS      []byte    `dynamodbav:":CS"`
+	}{now, now.Add(chatstate.Lifetime), 0, buf.Bytes()}
 	cexpr := "attribute_not_exists(ID) OR Locked >= :Now"
 	uexpr := "set Expired = :Expired, Locked = :Locked, CS = :CS"
 	_, err = ddb.UpdateItem(&dynamodb.UpdateItemInput{
