@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/orivej/OddHareGameBot/bot/chatstate"
-	"github.com/orivej/OddHareGameBot/bot/chatstate/ddb"
+	"github.com/orivej/OddHareGameBot/bot/ddb"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"lukechampine.com/frand"
