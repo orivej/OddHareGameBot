@@ -45,13 +45,15 @@ func main() {
 	b, err := tb.NewBot(tb.Settings{Token: *flToken, Poller: p})
 	e.Exit(err)
 	bot.NewBot(b, *flName, *flLocal, *flTable).Setup()
-	if !*flPoll {
+	if *flPoll {
+		b.Start()
+	} else {
+		go b.Start()
 		lambda.Start(func(u tb.Update) error {
 			b.Updates <- u
 			return nil
 		})
 	}
-	b.Start()
 }
 
 func debugFilter(u *tb.Update) bool {
