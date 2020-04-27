@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
@@ -22,6 +23,8 @@ var flPoll = flag.Bool("poll", false, "poll for updates")
 var flDebug = flag.Bool("debug", false, "enable debug logging")
 var flToken = flag.String("token", os.Getenv(envToken), "bot token: id:key in $"+envToken)
 var flName = flag.String("name", "OddHareGameBot", "bot name")
+var flLocal = flag.Bool("local", false, "keep state in local memory")
+var flTable = flag.String("ddbtable", "OddHareGameBotTable", "DynamoDB table name")
 
 func main() {
 	flag.Parse()
@@ -41,13 +44,13 @@ func main() {
 
 	b, err := tb.NewBot(tb.Settings{Token: *flToken, Poller: p})
 	e.Exit(err)
-	NewBot(b).Setup()
-	// if !*flPoll {
-	// 	lambda.Start(func(u tb.Update) error {
-	// 		b.Updates <- u
-	// 		return nil
-	// 	})
-	// }
+	NewBot(b, *flName, *flLocal, *flTable).Setup()
+	if !*flPoll {
+		lambda.Start(func(u tb.Update) error {
+			b.Updates <- u
+			return nil
+		})
+	}
 	b.Start()
 }
 

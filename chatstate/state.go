@@ -1,9 +1,6 @@
-package main
+package chatstate
 
 import (
-	"fmt"
-	"strings"
-
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -15,10 +12,6 @@ type ChatState struct {
 
 func (cs *ChatState) Reset() {
 	cs.Last, cs.Words, cs.Players = nil, nil, nil
-}
-
-func (cs *ChatState) Describe() string {
-	return renderChatState(cs.PlayersHTML(cs.Players), cs.Words)
 }
 
 func (cs *ChatState) AddPlayer(user *tb.User) bool {
@@ -40,19 +33,4 @@ func (cs *ChatState) RemovePlayer(user *tb.User) bool {
 		}
 	}
 	return false
-}
-
-var EscapeHTML = strings.NewReplacer(`<`, "&lt;", `>`, "&gt;", `&`, "&amp;").Replace
-
-func (cs *ChatState) PlayerHTML(user *tb.User) string {
-	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`,
-		user.ID, EscapeHTML(ChooseName(user, cs.Players)))
-}
-
-func (cs *ChatState) PlayersHTML(users []*tb.User) []string {
-	xs := make([]string, len(users))
-	for i, user := range users {
-		xs[i] = cs.PlayerHTML(user)
-	}
-	return xs
 }

@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/template"
 
+	"github.com/orivej/OddHareGameBot/chatstate"
 	"github.com/orivej/e"
+	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 type ctxStart struct {
@@ -44,9 +47,9 @@ var tmplStart = template.Must(template.New("").Parse(`
 
 `))
 
-func render(name string, private bool) string {
+func render(t, bot string, private bool) string {
 	var buf bytes.Buffer
-	err := tmplStart.ExecuteTemplate(&buf, name, ctxStart{BotName: *flName, Private: private})
+	err := tmplStart.ExecuteTemplate(&buf, t, ctxStart{BotName: bot, Private: private})
 	e.Exit(err)
 	return buf.String()
 }
@@ -117,4 +120,19 @@ func joinEnumerate(xs []string) (y string) {
 		y += ", затем " + joinWithAnd(xs[1:])
 	}
 	return
+}
+
+var EscapeHTML = strings.NewReplacer(`<`, "&lt;", `>`, "&gt;", `&`, "&amp;").Replace
+
+func PlayerHTML(cs *chatstate.ChatState, user *tb.User) string {
+	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`,
+		user.ID, EscapeHTML(ChooseName(user, cs.Players)))
+}
+
+func PlayersHTML(cs *chatstate.ChatState, users []*tb.User) []string {
+	xs := make([]string, len(users))
+	for i, user := range users {
+		xs[i] = PlayerHTML(cs, user)
+	}
+	return xs
 }

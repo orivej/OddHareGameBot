@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/orivej/OddHareGameBot/chatstate"
+	"github.com/orivej/OddHareGameBot/ddb"
 	"github.com/orivej/e"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
@@ -14,11 +16,12 @@ import (
 const gameLifetime = 6 * time.Hour
 
 type ChatStateMap interface {
-	Get(chatID int64) (*ChatState, func())
+	Get(chatID int64) (*chatstate.ChatState, func())
 }
 
 type Bot struct {
 	*tb.Bot
+	Name  string
 	Chats ChatStateMap
 
 	BtnJoin  tb.InlineButton
@@ -26,8 +29,14 @@ type Bot struct {
 	BtnPlay  tb.InlineButton
 }
 
-func NewBot(b *tb.Bot) *Bot {
-	return &Bot{Bot: b, Chats: NewLocalChatStateMap()}
+func NewBot(b *tb.Bot, name string, local bool, table string) *Bot {
+	bot := &Bot{Bot: b, Name: name}
+	if local {
+		bot.Chats = NewLocalChatStateMap()
+	} else {
+		bot.Chats = ddb.NewDDBChatStateMap(table)
+	}
+	return bot
 }
 
 func (b *Bot) Setup() {
@@ -49,14 +58,14 @@ func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*
 }
 
 func (b *Bot) OnStart(m *tb.Message) {
-	msg := render("Start", m.Chat.Type == tb.ChatPrivate)
+	msg := render("Start", b.Name, m.Chat.Type == tb.ChatPrivate)
 	b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 }
 
 func (b *Bot) OnHare(m *tb.Message) {
 	words := parseWords(m.Text)
 	if len(words) == 0 {
-		msg := render("Words", m.Chat.Type == tb.ChatPrivate)
+		msg := render("Words", b.Name, m.Chat.Type == tb.ChatPrivate)
 		b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 		return
 	}
@@ -72,20 +81,21 @@ func (b *Bot) OnHare(m *tb.Message) {
 	b.PostChatState(m.Chat, cs)
 }
 
-func (b *Bot) ChatStateMessage(cs *ChatState) (what string, options []interface{}) {
-	return cs.Describe(), []interface{}{tb.ModeHTML, tb.NoPreview, &tb.ReplyMarkup{
+func (b *Bot) ChatStateMessage(cs *chatstate.ChatState) (what string, options []interface{}) {
+	msg := renderChatState(PlayersHTML(cs, cs.Players), cs.Words)
+	return msg, []interface{}{tb.ModeHTML, tb.NoPreview, &tb.ReplyMarkup{
 		InlineKeyboard: [][]tb.InlineButton{{b.BtnJoin, b.BtnLeave, b.BtnPlay}},
 	}}
 }
 
-func (b *Bot) PostChatState(chat *tb.Chat, cs *ChatState) {
+func (b *Bot) PostChatState(chat *tb.Chat, cs *chatstate.ChatState) {
 	msg, opts := b.ChatStateMessage(cs)
 	if resp, ok := b.Post(chat, msg, opts...); ok {
 		cs.Last = resp
 	}
 }
 
-func (b *Bot) UpdateChatState(cs *ChatState) {
+func (b *Bot) UpdateChatState(cs *chatstate.ChatState) {
 	if cs.Last == nil {
 		return
 	}
@@ -158,10 +168,10 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 		}
 	}
 	if len(failed) > 0 {
-		msg := fmt.Sprintf(fmtUndelievered, joinWithAnd(cs.PlayersHTML(failed)), *flName)
+		msg := fmt.Sprintf(fmtUndelievered, joinWithAnd(PlayersHTML(cs, failed)), b.Name)
 		b.Post(m.Chat, msg, tb.ModeHTML, tb.NoPreview)
 		return
 	}
-	msg := fmt.Sprintf(fmtPlayStarted, joinEnumerate(cs.PlayersHTML(cs.Players)))
+	msg := fmt.Sprintf(fmtPlayStarted, joinEnumerate(PlayersHTML(cs, cs.Players)))
 	b.Post(m.Chat, msg, tb.ModeHTML, tb.NoPreview)
 }
