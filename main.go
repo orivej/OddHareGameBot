@@ -20,7 +20,6 @@ const envToken = "OddHareGameBotToken"
 var flPoll = flag.Bool("poll", false, "poll for updates")
 var flDebug = flag.Bool("debug", os.Getenv(envDebug) != "", "enable debug logging")
 var flToken = flag.String("token", os.Getenv(envToken), "bot token: id:key in $"+envToken)
-var flName = flag.String("name", "OddHareGameBot", "bot name")
 var flLocal = flag.Bool("local", false, "keep state in local memory")
 var flTable = flag.String("ddbtable", "OddHareGameBotTable", "DynamoDB table name")
 
@@ -44,7 +43,7 @@ func main() {
 
 	b, err := tb.NewBot(cfg)
 	e.Exit(err)
-	bot.NewBot(b, *flName, *flLocal, *flTable).Setup()
+	bot.NewBot(b, *flLocal, *flTable).Setup()
 	if *flPoll {
 		b.Start()
 	} else {

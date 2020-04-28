@@ -17,7 +17,6 @@ type ChatStateMap interface {
 
 type Bot struct {
 	*tb.Bot
-	Name  string
 	Chats ChatStateMap
 
 	BtnJoin  tb.InlineButton
@@ -25,8 +24,8 @@ type Bot struct {
 	BtnPlay  tb.InlineButton
 }
 
-func NewBot(b *tb.Bot, name string, local bool, table string) *Bot {
-	bot := &Bot{Bot: b, Name: name}
+func NewBot(b *tb.Bot, local bool, table string) *Bot {
+	bot := &Bot{Bot: b}
 	if local {
 		bot.Chats = NewLocalChatStateMap()
 	} else {
@@ -54,14 +53,14 @@ func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*
 }
 
 func (b *Bot) OnStart(m *tb.Message) {
-	msg := renderHelp("Start", b.Name, m.Chat.Type == tb.ChatPrivate)
+	msg := renderHelp("Start", b.Me.Username, m.Chat.Type == tb.ChatPrivate)
 	b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 }
 
 func (b *Bot) OnHare(m *tb.Message) {
 	words := parseWords(m.Text)
 	if len(words) == 0 {
-		msg := renderHelp("Words", b.Name, m.Chat.Type == tb.ChatPrivate)
+		msg := renderHelp("Words", b.Me.Username, m.Chat.Type == tb.ChatPrivate)
 		b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 		return
 	}
@@ -182,7 +181,7 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 		}
 	}
 	if len(failed) > 0 {
-		msg := renderUndelievered(PlayersHTML(cs, failed), b.Name)
+		msg := renderUndelievered(PlayersHTML(cs, failed), b.Me.Username)
 		b.Post(m.Chat, msg, tb.ModeHTML, tb.NoPreview)
 		return
 	}
