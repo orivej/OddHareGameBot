@@ -14,10 +14,6 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-type NoPoller struct{}
-
-func (NoPoller) Poll(*tb.Bot, chan tb.Update, chan struct{}) {}
-
 const envDebug = "OddHareGameBotDebug"
 const envToken = "OddHareGameBotToken"
 
@@ -35,23 +31,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := tb.Poller(NoPoller{})
+	cfg := tb.Settings{Token: *flToken}
 	if *flPoll {
-		p = &tb.LongPoller{Timeout: 10 * time.Second}
-	}
-	if *flDebug {
-		p = tb.NewMiddlewarePoller(p, debugFilter)
+		cfg.Poller = tb.Poller(&tb.LongPoller{Timeout: 10 * time.Second})
+		if *flDebug {
+			cfg.Poller = tb.NewMiddlewarePoller(cfg.Poller, debugFilter)
+		}
+	} else {
+		cfg.Updates = 1
+		cfg.Synchronous = true
 	}
 
-	b, err := tb.NewBot(tb.Settings{Token: *flToken, Poller: p})
+	b, err := tb.NewBot(cfg)
 	e.Exit(err)
 	bot.NewBot(b, *flName, *flLocal, *flTable).Setup()
 	if *flPoll {
 		b.Start()
 	} else {
-		go b.Start()
-		lambda.Start(func(u tb.Update) error {
-			b.Updates <- u
+		type Request struct {
+			Body string `json:"body"`
+		}
+		lambda.Start(func(req Request) error {
+			var u tb.Update
+			err = json.Unmarshal([]byte(req.Body), &u)
+			e.Exit(err)
+			if *flDebug {
+				debugFilter(&u)
+			}
+			b.ProcessUpdate(u)
 			return nil
 		})
 	}
