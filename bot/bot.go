@@ -40,6 +40,7 @@ func (b *Bot) Setup() {
 	b.BtnPlay = tb.InlineButton{Unique: "play", Text: "Играть"}
 	b.Handle("/start", b.OnStart)
 	b.Handle(tb.OnAddedToGroup, b.OnStart)
+	b.Handle("/rules", b.OnRules)
 	b.Handle("/hare", b.OnHare)
 	b.Handle(&b.BtnJoin, b.OnBtnJoin)
 	b.Handle(&b.BtnLeave, b.OnBtnLeave)
@@ -55,6 +56,10 @@ func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*
 func (b *Bot) OnStart(m *tb.Message) {
 	msg := renderHelp("Start", b.Me.Username, m.Chat.Type == tb.ChatPrivate)
 	b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
+}
+
+func (b *Bot) OnRules(m *tb.Message) {
+	b.Post(m.Chat, msgRules, tb.ModeMarkdown, tb.NoPreview)
 }
 
 func (b *Bot) OnHare(m *tb.Message) {
