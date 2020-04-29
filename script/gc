@@ -1,0 +1,8 @@
+#!/bin/sh
+set -ex
+cd "$(dirname "$0")/.."
+bin="$(basename "$PWD")"
+func="${bin}"Function
+aws lambda list-versions-by-function --function-name "$func" |
+    jq -r '.Versions[] | .Version | select (. != "$LATEST")' |
+    xe aws lambda delete-function --function-name "$func" --qualifier {}
