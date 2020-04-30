@@ -12,8 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	ddba "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/klauspost/compress/zstd"
-	"github.com/orivej/OddHareGameBot/bot/chatstate"
 	"github.com/orivej/e"
+	"github.com/orivej/enlapin/bot/chatstate"
 )
 
 type DDBChatStateMap struct {

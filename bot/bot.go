@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/orivej/OddHareGameBot/bot/chatstate"
-	"github.com/orivej/OddHareGameBot/bot/ddb"
 	"github.com/orivej/e"
+	"github.com/orivej/enlapin/bot/chatstate"
+	"github.com/orivej/enlapin/bot/ddb"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"lukechampine.com/frand"
 )

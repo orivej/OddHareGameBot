@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/orivej/OddHareGameBot/bot/chatstate"
 	"github.com/orivej/e"
+	"github.com/orivej/enlapin/bot/chatstate"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 

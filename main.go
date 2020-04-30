@@ -6,22 +6,26 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/orivej/OddHareGameBot/bot"
 	"github.com/orivej/e"
+	"github.com/orivej/enlapin/bot"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-const envDebug = "OddHareGameBotDebug"
-const envToken = "OddHareGameBotToken"
+var _executable, _ = os.Executable()
+var executable = filepath.Base(_executable)
 
-var flPoll = flag.Bool("poll", false, "poll for updates")
+var envDebug = executable + "Debug"
+var envToken = executable + "Token"
+
+var flPoll = flag.Bool("poll", false, "poll for updates rather than listen for webhook")
 var flDebug = flag.Bool("debug", os.Getenv(envDebug) != "", "enable debug logging")
 var flToken = flag.String("token", os.Getenv(envToken), "bot token: id:key in $"+envToken)
-var flLocal = flag.Bool("local", false, "keep state in local memory")
-var flTable = flag.String("ddbtable", "OddHareGameBotTable", "DynamoDB table name")
+var flLocal = flag.Bool("local", false, "keep state in local memory rathar than in DynamoDB")
+var flTable = flag.String("ddbtable", executable, "DynamoDB table name")
 
 func main() {
 	flag.Parse()
