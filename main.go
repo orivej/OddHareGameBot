@@ -25,7 +25,7 @@ var flPoll = flag.Bool("poll", false, "poll for updates rather than listen for w
 var flDebug = flag.Bool("debug", os.Getenv(envDebug) != "", "enable debug logging")
 var flToken = flag.String("token", os.Getenv(envToken), "bot token: id:key in $"+envToken)
 var flLocal = flag.Bool("local", false, "keep state in local memory rathar than in DynamoDB")
-var flTable = flag.String("ddbtable", executable, "DynamoDB table name")
+var flTable = flag.String("ddbtable", executable+"Table", "DynamoDB table name")
 
 func main() {
 	flag.Parse()

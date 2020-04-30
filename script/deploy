@@ -1,12 +1,10 @@
 #!/bin/sh
 set -ex
 cd "$(dirname "$0")/.."
-bin="$(basename "$PWD")"
-func="${bin}"Function
-CGO_ENABLED=0 go build -ldflags="-s -w" -v
-CGO_ENABLED=0 go test -ldflags="-s -w" ./bot
+source script/vars
+
+script/build
+script/test
 upx "$bin"
-7z a "$bin".zip "$bin"
-rm "$bin"
-aws lambda update-function-code --function-name "$func" --zip-file fileb://"$bin".zip --publish
-rm "$bin".zip
+terraform apply
+rm "$bin" "$bin".zip
