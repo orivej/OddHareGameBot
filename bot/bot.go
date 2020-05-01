@@ -41,6 +41,10 @@ func (b *Bot) Setup() {
 	b.Handle("/start", b.OnStart)
 	b.Handle(tb.OnAddedToGroup, b.OnStart)
 	b.Handle("/rules", b.OnRules)
+	b.Handle("/about", b.OnAbout)
+	b.Handle("/aboutname", b.OnAboutName)
+	b.Handle("/aboutpic", b.OnAboutPic)
+	b.Handle("/aboutid", b.OnAboutID)
 	b.Handle("/hare", b.OnHare)
 	b.Handle(&b.BtnJoin, b.OnBtnJoin)
 	b.Handle(&b.BtnLeave, b.OnBtnLeave)
@@ -58,9 +62,11 @@ func (b *Bot) OnStart(m *tb.Message) {
 	b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
 }
 
-func (b *Bot) OnRules(m *tb.Message) {
-	b.Post(m.Chat, msgRules, tb.ModeMarkdown, tb.NoPreview)
-}
+func (b *Bot) OnRules(m *tb.Message)     { b.Post(m.Chat, msgRules, tb.ModeMarkdown, tb.NoPreview) }
+func (b *Bot) OnAbout(m *tb.Message)     { b.Post(m.Chat, msgAbout, tb.ModeMarkdown, tb.NoPreview) }
+func (b *Bot) OnAboutName(m *tb.Message) { b.Post(m.Chat, msgAboutName, tb.ModeMarkdown, tb.NoPreview) }
+func (b *Bot) OnAboutPic(m *tb.Message)  { b.Post(m.Chat, msgAboutPic, tb.ModeMarkdown, tb.NoPreview) }
+func (b *Bot) OnAboutID(m *tb.Message)   { b.Post(m.Chat, msgAboutID, tb.ModeMarkdown, tb.NoPreview) }
 
 func (b *Bot) OnHare(m *tb.Message) {
 	words := parseWords(m.Text)

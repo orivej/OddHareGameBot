@@ -39,13 +39,25 @@ provider "telegram" {
 resource "telegram_bot_commands" "a" {
   commands = [{
     command     = "start"
-    description = "— справка"
+    description = "справка"
     }, {
     command     = "rules"
-    description = "— правила"
+    description = "правила"
+    }, {
+    command     = "about"
+    description = "обо мне"
     }, {
     command     = "hare"
     description = "слова… — задать слова для игры (через пробел, запятую или с новой строки)"
+    }, {
+    command     = "aboutname"
+    description = "Кто такой Люциус Кларк?"
+    }, {
+    command     = "aboutpic"
+    description = "Кто изображён на моём аватаре?"
+    }, {
+    command     = "aboutid"
+    description = "Откуда пошло выражение «ехать зайцем»?"
   }]
 }
 resource "telegram_bot_webhook" "a" {

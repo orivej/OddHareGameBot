@@ -6,5 +6,5 @@ source script/vars
 script/build
 script/test
 upx "$bin"
-terraform apply
+terraform apply "$@"
 rm "$bin" "$bin".zip
