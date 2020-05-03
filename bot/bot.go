@@ -20,7 +20,7 @@ type Bot struct {
 
 	BtnJoin  tb.InlineButton
 	BtnLeave tb.InlineButton
-	BtnPlay  tb.InlineButton
+	BtnBegin tb.InlineButton
 }
 
 func NewBot(b *tb.Bot, local bool, table string) *Bot {
@@ -36,7 +36,7 @@ func NewBot(b *tb.Bot, local bool, table string) *Bot {
 func (b *Bot) Setup() {
 	b.BtnJoin = tb.InlineButton{Unique: "join", Text: "Вступить"}
 	b.BtnLeave = tb.InlineButton{Unique: "leave", Text: "Выйти"}
-	b.BtnPlay = tb.InlineButton{Unique: "play", Text: "Играть"}
+	b.BtnBegin = tb.InlineButton{Unique: "begin", Text: "Начать"}
 	b.Handle("/start", b.OnStart)
 	b.Handle(tb.OnAddedToGroup, b.OnStart)
 	b.Handle("/rules", b.OnRules)
@@ -45,10 +45,10 @@ func (b *Bot) Setup() {
 	b.Handle("/aboutname", b.OnAboutName)
 	b.Handle("/aboutpic", b.OnAboutPic)
 	b.Handle("/aboutid", b.OnAboutID)
-	b.Handle("/hare", b.OnHare)
+	b.Handle("/play", b.OnPlay)
 	b.Handle(&b.BtnJoin, b.OnBtnJoin)
 	b.Handle(&b.BtnLeave, b.OnBtnLeave)
-	b.Handle(&b.BtnPlay, b.OnBtnPlay)
+	b.Handle(&b.BtnBegin, b.OnBtnPlay)
 }
 
 func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*tb.Message, bool) {
@@ -64,7 +64,7 @@ func (b *Bot) OnStart(m *tb.Message) {
 	}
 	if topic := decodeTopic(m.Payload); topic != "" {
 		m.Text = topic
-		b.OnHare(m)
+		b.OnPlay(m)
 		return
 	}
 	msg := renderHelp("Start", b.Me.Username, m.Private())
@@ -80,7 +80,7 @@ func (b *Bot) OnAboutName(m *tb.Message) { b.Post(m.Chat, msgAboutName, tb.ModeM
 func (b *Bot) OnAboutPic(m *tb.Message)  { b.Post(m.Chat, msgAboutPic, tb.ModeMarkdown) }
 func (b *Bot) OnAboutID(m *tb.Message)   { b.Post(m.Chat, msgAboutID, tb.ModeMarkdown) }
 
-func (b *Bot) OnHare(m *tb.Message) {
+func (b *Bot) OnPlay(m *tb.Message) {
 	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if cs.Last != nil {
@@ -90,13 +90,14 @@ func (b *Bot) OnHare(m *tb.Message) {
 	}
 	cs.Reset()
 	cs.Card = parseCard(m.Text)
+	cs.AddPlayer(m.Sender)
 	b.PostChatState(m.Chat, cs)
 }
 
 func (b *Bot) ChatStateMessage(cs *chatstate.ChatState) (what string, options []interface{}) {
 	msg := renderChatState(cs)
 	return msg, []interface{}{tb.ModeHTML, tb.NoPreview, &tb.ReplyMarkup{
-		InlineKeyboard: [][]tb.InlineButton{{b.BtnJoin, b.BtnLeave, b.BtnPlay}},
+		InlineKeyboard: [][]tb.InlineButton{{b.BtnJoin, b.BtnLeave, b.BtnBegin}},
 	}}
 }
 

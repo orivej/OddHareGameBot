@@ -47,8 +47,8 @@ resource "telegram_bot_commands" "a" {
     command     = "topics"
     description = "темы"
     }, {
-    command     = "hare"
-    description = "начать игру"
+    command     = "play"
+    description = "играть"
     }, {
     command     = "about"
     description = "обо мне"

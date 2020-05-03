@@ -11,7 +11,7 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-const msgObsolete = "Эта игра устарела, начните новую! /hare"
+const msgObsolete = "Эта игра устарела, начните новую! /play"
 const msgNoPlayers = "В игре нет игроков."
 const msgYouAreHare = "Ты заяц!"
 const msgRules = `
@@ -84,9 +84,9 @@ var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 {{- end }}
 /rules — правила
 /topics — темы наборов слов
-/hare — начать игру на случайную тему
-/hare тема — начать игру на известную мне тему
-/hare слова — начать игру со словами, заданными через пробел, запятую или с новой строки
+/play — играть на случайную тему
+/play тема — играть на известную мне тему
+/play слова — играть со словами, заданными через пробел, запятую или с новой строки
 /about — обо мне
 {{- end -}}
 
@@ -106,7 +106,7 @@ var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 {{- end -}}
 Присоединяйтесь!
 {{- if .Players -}}
-	{{""}} По кнопке «Играть» я сообщу одному, что он заяц, а остальным тайное слов.
+	{{""}} По кнопке «Начать» я сообщу одному, что он заяц, а остальным тайное слов.
 {{- end -}}
 {{- end -}}
 
@@ -116,7 +116,7 @@ var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 писать! <a href="https://t.me/{{ .BotName }}">Добавь
 {{- if ne 1 (len .Players) }}те{{ end -}}
 </a> меня в свои контакты и нажми
-{{- if ne 1 (len .Players) }}те{{ end }} «Играть» ещё раз!
+{{- if ne 1 (len .Players) }}те{{ end }} «Начать» ещё раз!
 {{- end -}}
 
 {{ define "Play" -}}
