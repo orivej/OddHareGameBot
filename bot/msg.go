@@ -112,12 +112,9 @@ var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 {{- end -}}
 
 {{ define "Undelivered" -}}
-{{ joinWithAnd .Players }}, я не могу
+{{ joinWithAnd .Players }}, разреши{{.Те}}
 {{- if eq 1 (len .Players) }} тебе {{ else }} вам {{ end -}}
-писать! <a href="https://t.me/{{ .BotName }}">Добавь
-{{- if ne 1 (len .Players) }}те{{ end -}}
-</a> меня в свои контакты и нажми
-{{- if ne 1 (len .Players) }}те{{ end }} «Начать» ещё раз!
+писать! <a href="https://t.me/{{ .BotName }}">Перейди{{.Те}} к диалогу со мной</a>, нажми{{.Те}} START, верни{{.Те}}сь к групповому чату и нажми{{.Те}} «Начать» ещё раз!
 {{- end -}}
 
 {{ define "Play" -}}
@@ -168,7 +165,8 @@ func renderUndelievered(players []string, bot string) string {
 	return render("Undelivered", struct {
 		Players []string
 		BotName string
-	}{players, bot})
+		Те      string
+	}{players, bot, те(len(players))})
 }
 
 func renderPlay(players []string, bot string, private bool) string {
@@ -177,6 +175,13 @@ func renderPlay(players []string, bot string, private bool) string {
 		BotName string
 		Private bool
 	}{players, bot, private})
+}
+
+func те(x int) string {
+	if x == 1 {
+		return ""
+	}
+	return "те"
 }
 
 func num(x int, zero, one, two string) string {
