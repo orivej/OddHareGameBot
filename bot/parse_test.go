@@ -15,11 +15,13 @@ func TestRemoveEntities(t *testing.T) {
 	}
 }
 
-func TestParseWords(t *testing.T) {
+func TestParseCard(t *testing.T) {
+	assert.NotEmpty(t, parseCard("").Words)
+	assert.NotEmpty(t, parseCard("ГОРОДА").Words)
 	for query, words := range map[string][]string{
-		"": nil,
+		"города": cardByTopic["города"].Words,
 		"/hare  @a   @b c  d \n  e f \n \n g,  h ": {"c", "d", "e f", "g,  h"},
 	} {
-		assert.Equal(t, words, parseWords(query))
+		assert.Equal(t, words, parseCard(query).Words)
 	}
 }

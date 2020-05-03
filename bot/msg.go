@@ -14,11 +14,10 @@ import (
 const msgObsolete = "Эта игра устарела, начните новую! /hare"
 const msgNoPlayers = "В игре нет игроков."
 const msgYouAreHare = "Ты заяц!"
-const fmtPlayStarted = "Теперь каждый по очереди называет ассоциацию: %s."
 const msgRules = `
-Участники, трое или больше, вводят набор слов: 16 слов на одну тему. Игра случайно выбирает слово из набора, зайца из игроков и очерёдность хода. Игра сообщает зайцу, что он заяц, а остальным загаданное слово. Каждый по очереди объявляет одно слово по ассоциации с тайным; заяц в том числе, даже если ходит первым. Все обсуждают, кто же заяц, и голосуют — при ничьей первый игрок решает, кто из лидеров голосования заяц. Заяц выигрывает, если выбрали не его или если он правильно назовёт тайное слово с первой, а при игре втроём со второй попытки.
+Участники, трое или больше, получают набор слов (16 слов на одну тему). Игра случайно выбирает слово из набора, зайца из игроков и очерёдность хода. Игра сообщает зайцу, что он заяц, а остальным загаданное слово. Каждый по очереди объявляет одно слово по ассоциации с тайным; заяц в том числе, даже если ходит первым. Все обсуждают, кто же заяц, и голосуют — при ничьей первый игрок решает, кто из лидеров голосования заяц. Заяц выигрывает, если выбрали не его, или если он правильно назовёт тайное слово с первой, а при игре втроём со второй попытки.
 
-В игре на счёт до пяти очков непойманный заяц получает два очка, осведомлённый одно, иначе остальные по два. Настольная версия: https://www.mosigra.ru/Face/Show/zayac/ Разбор игры: https://habr.com/ru/company/mosigra/blog/456844/
+В игре на счёт до пяти очков не пойманный заяц получает два очка, угадавший слово одно, иначе остальные по два. Настольная версия: https://www.mosigra.ru/Face/Show/zayac/ Разбор игры: https://habr.com/ru/company/mosigra/blog/456844/
 `
 const msgAbout = `
 Это [проект с открытым кодом](https://github.com/orivej/enlapin), его можно посмотреть и изменить!
@@ -41,7 +40,7 @@ const msgAboutName = `
 const msgAboutPic = `
 На [карикатуре](https://digi.ub.uni-heidelberg.de/diglit/caricatures1870_1871bd4/0045/image) Фостена Бетбедера (из [коллекции музея Карнавале](http://parismuseescollections.paris.fr/fr/musee-carnavalet/oeuvres/le-lievre-0)) заяц — генерал и губернатор осаждаемого в 1870-м немецкими войсками Парижа Луи Жюль Трошю — держит пропуск, выписанный ему канцлером Бисмарком в Версале, ставшем штабом прусского командования и [местом провозглашения](https://commons.wikimedia.org/wiki/File:Wernerprokla.jpg) единой Германской империи — грандиозного достижения умелого дипломата. (Вот был бы Заяц!)
 
-Насколько мне известно, Отто фон Бисмарк не занимался пропусками — карикатура основана на другом: дело в том, что из окружённого Парижа было не выехать без разрешения Трошю. Об этом по-британски [комично пишет](https://archive.org/details/cu31924028286981/page/n135/mode/2up/search/laisser-passer) Эрнест Визетелли (сын переводчика и издателя Золя) в своих Днях приключений: падение Франции, 1870-71. А когда Виктор Гюго верулся на время осады, чтобы поддержать сограждан (сборник этого периода будет назван Грозный год и посвящён Парижу, столице народов), ему тоже пришлось обратиться к губернатору:
+Насколько мне известно, Отто фон Бисмарк не занимался пропусками — карикатура основана на другом: дело в том, что из окружённого Парижа было не выехать без разрешения Трошю. Об этом по-британски [комично пишет](https://archive.org/details/cu31924028286981/page/n135/mode/2up/search/laisser-passer) Эрнест Визетелли (сын переводчика и издателя Золя) в своих Днях приключений: падение Франции, 1870-71. А когда Виктор Гюго вернулся на время осады, чтобы поддержать сограждан (сборник этого периода будет назван Грозный год и посвящён Парижу, столице народов), ему тоже пришлось обратиться к губернатору:
 
 Генералу Трошю
 Париж, 25 сентября 1870
@@ -67,47 +66,48 @@ const msgAboutID = `
 Во французском слово заяц ассоциировалось больше с местом, чем со стоимостью проезда, и не прикрепилось к пассажирам поездов… Однако ещё оставалось жить! В 1923-м Маленький парижанин в заметке Le coucou et les lapins (под [центральной картинкой](https://gallica.bnf.fr/ark:/12148/bpt6k605596h/f2.highres), [текстом](https://gallica.bnf.fr/ark:/12148/bpt6k605596h.textePage.f2.langFR)) задаётся вопросом, почему пассажиры такси говорят своим спутникам, что поедут зайцами, когда уступают им удобные уголки. (Кажется, неудобным при этом считается место между другими, а не рядом с водителем или где-то ещё.) Для ответа находится общий момент — и новым, и старым зайцам не комфортно сидеть рядом с кем-то (с кучером) — а название заяц объясняется позой, которую занимает такой пассажир. Если это верно, то понятно, почему lapin в этом смысле больше не встречается.
 `
 
-var tmplFuncs = template.FuncMap{"num": num, "plu": plu, "joinWithAnd": joinWithAnd}
+var tmplFuncs = template.FuncMap{
+	"num":           num,
+	"plu":           plu,
+	"join":          strings.Join,
+	"joinWithAnd":   joinWithAnd,
+	"joinEnumerate": joinEnumerate,
+}
 
 var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
-{{ define "hello" -}}
-Привет! Я помощник для игры в [Зайца](https://boardgamegeek.com/boardgame/227072/chameleon)!
-{{- end -}}
-
-{{ define "Words" -}}
-	{{- if .Private -}}
-		Добавь меня в группу и напиши {{""}}
-	{{- else -}}
-		Напишите {{""}}
-        {{- end -}}
-` + "`/hare слова`" + `, чтобы начать. (В оригинале 16 слов на одну тему; [примеры](http://ref.manuscriptgames.org/chameleon/index.html).) Отдельные слова можно вводить через пробел, а словосочетания через запятую или с новой строки.
-{{- end -}}
-
-{{ define "add" -}}
-	{{- if .Private -}}
-		Вступите {{""}}
-	{{- else -}}
-		[Добавьте](https://t.me/{{ .BotName }}) меня в свои контакты, вступите {{""}}
-	{{- end -}}
-в игру, и когда игра начнётся, я сообщу одному, что он заяц, а остальным одно из слов.
-{{- end -}}
-
 {{ define "Start" -}}
-{{- template "hello" . }} {{""}}
-{{- template "Words" . }} {{""}}
-{{- template "add" . }}
+Привет! Я помощник для игры в [Зайца](https://boardgamegeek.com/boardgame/227072/chameleon)! {{""}}
+{{- if .Private -}}
+	[Добавь меня в группу](https://t.me/{{ .BotName }}?startgroup=startgroup), чтобы сыграть с друзьями!
+{{- else -}}
+	[Добавьте](https://t.me/{{ .BotName }}) меня в свои контакты, чтобы получить тайное слово, когда начнётся игра!
+{{- end }}
 /rules — правила
+/topics — темы наборов слов
+/hare — начать игру на случайную тему
+/hare тема — начать игру на известную мне тему
+/hare слова — начать игру со словами, заданными через пробел, запятую или с новой строки
 /about — обо мне
 {{- end -}}
 
+{{ define "Topics" -}}
+Мои темы: {{ join .Topics ", " }}.
+{{- end -}}
+
 {{ define "ChatState" -}}
-У меня {{ num (len .Words) "слов" "слово" "слова" }}. {{""}}
-{{- if .Players -}}
-{{ plu (len .Players) "Играет" "Играют" }} {{ joinWithAnd .Players }}. {{""}}
+{{- if .Topic -}}
+Тема: {{ .Topic }}.
+{{ end -}}
+Слова: {{ join .Words ", " }}.
+{{ if .Players -}}
+	{{ plu (len .Players) "Играет" "Играют" }} {{ joinWithAnd .Players }}. {{""}}
 {{- else -}}
-Ещё никто не играет. {{""}}
+	Ещё никто не играет. {{""}}
 {{- end -}}
 Присоединяйтесь!
+{{- if .Players -}}
+	{{""}} По кнопке «Играть» я сообщу одному, что он заяц, а остальным тайное слов.
+{{- end -}}
 {{- end -}}
 
 {{ define "Undelivered" -}}
@@ -115,7 +115,16 @@ var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 {{- if eq 1 (len .Players) }} тебе {{ else }} вам {{ end -}}
 писать! <a href="https://t.me/{{ .BotName }}">Добавь
 {{- if ne 1 (len .Players) }}те{{ end -}}
-</a> меня в свои контакты!
+</a> меня в свои контакты и нажми
+{{- if ne 1 (len .Players) }}те{{ end }} «Играть» ещё раз!
+{{- end -}}
+
+{{ define "Play" -}}
+Теперь каждый по очереди называет ассоциацию
+{{- if not .Private -}}
+	{{""}} к <a href="https://t.me/{{ .BotName }}">полученному слову</a>
+{{- end -}}
+: {{ joinEnumerate .Players }}.
 {{- end -}}
 `))
 
@@ -133,8 +142,25 @@ func renderHelp(t, bot string, private bool) string {
 	}{bot, private})
 }
 
-func renderChatState(players, words []string) string {
-	return render("ChatState", struct{ Players, Words []string }{players, words})
+func renderTopics(bot string, private bool) string {
+	xs := make([]string, len(topics))
+	for i, topic := range topics {
+		if private {
+			xs[i] = fmt.Sprintf(`<a href="https://t.me/%s?start=%s">%s</a>`,
+				bot, encodeTopic(topic), EscapeHTML(topic))
+		} else {
+			// start links to private chat, startgroup asks for group.
+			xs[i] = EscapeHTML(topic)
+		}
+	}
+	return strings.Join(xs, ", ")
+}
+
+func renderChatState(cs *chatstate.ChatState) string {
+	return render("ChatState", struct {
+		Topic          string
+		Words, Players []string
+	}{cs.Card.Topic, cs.Card.Words, PlayersHTML(cs, cs.Players)})
 }
 
 func renderUndelievered(players []string, bot string) string {
@@ -142,6 +168,14 @@ func renderUndelievered(players []string, bot string) string {
 		Players []string
 		BotName string
 	}{players, bot})
+}
+
+func renderPlay(players []string, bot string, private bool) string {
+	return render("Play", struct {
+		Players []string
+		BotName string
+		Private bool
+	}{players, bot, private})
 }
 
 func num(x int, zero, one, two string) string {

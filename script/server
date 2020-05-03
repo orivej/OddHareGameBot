@@ -2,9 +2,5 @@
 set -ex
 cd "$(dirname "$0")/.."
 source script/vars
-
 script/build
-script/test
-upx "$bin"
-terraform apply "$@"
-rm "$bin".zip
+./"$bin" -poll -local "$@"

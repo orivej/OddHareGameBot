@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/orivej/e"
@@ -41,6 +40,7 @@ func (b *Bot) Setup() {
 	b.Handle("/start", b.OnStart)
 	b.Handle(tb.OnAddedToGroup, b.OnStart)
 	b.Handle("/rules", b.OnRules)
+	b.Handle("/topics", b.OnTopics)
 	b.Handle("/about", b.OnAbout)
 	b.Handle("/aboutname", b.OnAboutName)
 	b.Handle("/aboutpic", b.OnAboutPic)
@@ -52,29 +52,35 @@ func (b *Bot) Setup() {
 }
 
 func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*tb.Message, bool) {
+	options = append(options, tb.NoPreview)
 	m, err := b.Send(to, what, options...)
 	e.Print(err)
 	return m, err == nil
 }
 
 func (b *Bot) OnStart(m *tb.Message) {
-	msg := renderHelp("Start", b.Me.Username, m.Chat.Type == tb.ChatPrivate)
-	b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
-}
-
-func (b *Bot) OnRules(m *tb.Message)     { b.Post(m.Chat, msgRules, tb.ModeMarkdown, tb.NoPreview) }
-func (b *Bot) OnAbout(m *tb.Message)     { b.Post(m.Chat, msgAbout, tb.ModeMarkdown, tb.NoPreview) }
-func (b *Bot) OnAboutName(m *tb.Message) { b.Post(m.Chat, msgAboutName, tb.ModeMarkdown, tb.NoPreview) }
-func (b *Bot) OnAboutPic(m *tb.Message)  { b.Post(m.Chat, msgAboutPic, tb.ModeMarkdown, tb.NoPreview) }
-func (b *Bot) OnAboutID(m *tb.Message)   { b.Post(m.Chat, msgAboutID, tb.ModeMarkdown, tb.NoPreview) }
-
-func (b *Bot) OnHare(m *tb.Message) {
-	words := parseWords(m.Text)
-	if len(words) == 0 {
-		msg := renderHelp("Words", b.Me.Username, m.Chat.Type == tb.ChatPrivate)
-		b.Post(m.Chat, msg, tb.ModeMarkdown, tb.NoPreview)
+	if m.Payload == "startgroup" {
 		return
 	}
+	if topic := decodeTopic(m.Payload); topic != "" {
+		m.Text = topic
+		b.OnHare(m)
+		return
+	}
+	msg := renderHelp("Start", b.Me.Username, m.Private())
+	b.Post(m.Chat, msg, tb.ModeMarkdown)
+}
+
+func (b *Bot) OnRules(m *tb.Message) { b.Post(m.Chat, msgRules, tb.ModeMarkdown, tb.NoPreview) }
+func (b *Bot) OnTopics(m *tb.Message) {
+	b.Post(m.Chat, renderTopics(b.Me.Username, m.Private()), tb.ModeHTML)
+}
+func (b *Bot) OnAbout(m *tb.Message)     { b.Post(m.Chat, msgAbout, tb.ModeMarkdown) }
+func (b *Bot) OnAboutName(m *tb.Message) { b.Post(m.Chat, msgAboutName, tb.ModeMarkdown) }
+func (b *Bot) OnAboutPic(m *tb.Message)  { b.Post(m.Chat, msgAboutPic, tb.ModeMarkdown) }
+func (b *Bot) OnAboutID(m *tb.Message)   { b.Post(m.Chat, msgAboutID, tb.ModeMarkdown) }
+
+func (b *Bot) OnHare(m *tb.Message) {
 	cs, unlock := b.Chats.Get(m.Chat.ID)
 	defer unlock()
 	if cs.Last != nil {
@@ -83,12 +89,12 @@ func (b *Bot) OnHare(m *tb.Message) {
 		e.Print(err)
 	}
 	cs.Reset()
-	cs.Words = words
+	cs.Card = parseCard(m.Text)
 	b.PostChatState(m.Chat, cs)
 }
 
 func (b *Bot) ChatStateMessage(cs *chatstate.ChatState) (what string, options []interface{}) {
-	msg := renderChatState(PlayersHTML(cs, cs.Players), cs.Words)
+	msg := renderChatState(cs)
 	return msg, []interface{}{tb.ModeHTML, tb.NoPreview, &tb.ReplyMarkup{
 		InlineKeyboard: [][]tb.InlineButton{{b.BtnJoin, b.BtnLeave, b.BtnPlay}},
 	}}
@@ -176,7 +182,7 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 		cs.Players[i], cs.Players[j] = cs.Players[j], cs.Players[i]
 	})
 	hare := cs.Players[frand.Intn(len(cs.Players))]
-	word := cs.Words[frand.Intn(len(cs.Words))]
+	word := cs.Card.Words[frand.Intn(len(cs.Card.Words))]
 	var failed []*tb.User
 	for _, player := range cs.Players {
 		msg := word
@@ -193,9 +199,9 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 	}
 	if len(failed) > 0 {
 		msg := renderUndelievered(PlayersHTML(cs, failed), b.Me.Username)
-		b.Post(m.Chat, msg, tb.ModeHTML, tb.NoPreview)
+		b.Post(m.Chat, msg, tb.ModeHTML)
 		return
 	}
-	msg := fmt.Sprintf(fmtPlayStarted, joinEnumerate(PlayersHTML(cs, cs.Players)))
-	b.Post(m.Chat, msg, tb.ModeHTML, tb.NoPreview)
+	msg := renderPlay(PlayersHTML(cs, cs.Players), b.Me.Username, m.Private())
+	b.Post(m.Chat, msg, tb.ModeHTML)
 }

@@ -44,11 +44,14 @@ resource "telegram_bot_commands" "a" {
     command     = "rules"
     description = "правила"
     }, {
-    command     = "about"
-    description = "обо мне"
+    command     = "topics"
+    description = "темы"
     }, {
     command     = "hare"
-    description = "слова… — задать слова для игры (через пробел, запятую или с новой строки)"
+    description = "начать игру"
+    }, {
+    command     = "about"
+    description = "обо мне"
     }, {
     command     = "aboutname"
     description = "Кто такой Люциус Кларк?"

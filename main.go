@@ -41,7 +41,6 @@ func main() {
 			cfg.Poller = tb.NewMiddlewarePoller(cfg.Poller, debugFilter)
 		}
 	} else {
-		cfg.Updates = 1
 		cfg.Synchronous = true
 	}
 

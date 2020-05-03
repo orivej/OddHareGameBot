@@ -9,14 +9,19 @@ import (
 const Lifetime = 6 * time.Hour // How long is the ChatState usable after Last.Unixtime.
 const Locktime = time.Minute   // How long can a handler exclusively use a ChatState.
 
+type Card struct {
+	Topic string
+	Words []string
+}
+
 type ChatState struct {
 	Last    *tb.Message
 	Players []*tb.User
-	Words   []string
+	Card    Card
 }
 
 func (cs *ChatState) Reset() {
-	cs.Last, cs.Words, cs.Players = nil, nil, nil
+	*cs = ChatState{}
 }
 
 func (cs *ChatState) AddPlayer(user *tb.User) bool {
