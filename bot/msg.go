@@ -82,6 +82,7 @@ var tmpl = template.Must(template.New("").Funcs(tmplFuncs).Parse(`
 {{- else -}}
 	[Добавьте](https://t.me/{{ .BotName }}) меня в свои контакты, чтобы получить тайное слово, когда начнётся игра!
 {{- end }}
+/start — этот список команд
 /rules — правила
 /topics — темы наборов слов
 /play — играть на случайную тему
