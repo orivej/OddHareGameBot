@@ -10,6 +10,8 @@ import (
 	"lukechampine.com/frand"
 )
 
+const humanReactionTime = 2 * time.Second
+
 type ChatStateMap interface {
 	Get(chatID int64) (*chatstate.ChatState, func())
 }
@@ -48,7 +50,7 @@ func (b *Bot) Setup() {
 	b.Handle("/play", b.OnPlay)
 	b.Handle(&b.BtnJoin, b.OnBtnJoin)
 	b.Handle(&b.BtnLeave, b.OnBtnLeave)
-	b.Handle(&b.BtnBegin, b.OnBtnPlay)
+	b.Handle(&b.BtnBegin, b.OnBtnBegin)
 }
 
 func (b *Bot) Post(to tb.Recipient, what interface{}, options ...interface{}) (*tb.Message, bool) {
@@ -167,13 +169,17 @@ func (b *Bot) OnBtnLeave(c *tb.Callback) {
 	}
 }
 
-func (b *Bot) OnBtnPlay(c *tb.Callback) {
+func (b *Bot) OnBtnBegin(c *tb.Callback) {
+	now := time.Now().UTC()
 	m := c.Message
 	cs, unlock := b.chatState(m)
 	if cs == nil {
 		return
 	}
 	defer unlock()
+	if cs.LastBeginTime.Add(humanReactionTime).After(now) {
+		return // Debounce simultaneous Begin requests.
+	}
 	if len(cs.Players) == 0 {
 		_, err := b.Reply(m, msgNoPlayers)
 		e.Print(err)
@@ -198,11 +204,13 @@ func (b *Bot) OnBtnPlay(c *tb.Callback) {
 			failed = append(failed, player)
 		}
 	}
+	var msg string
 	if len(failed) > 0 {
-		msg := renderUndelievered(PlayersHTML(cs, failed), b.Me.Username)
-		b.Post(m.Chat, msg, tb.ModeHTML)
-		return
+		msg = renderUndelievered(PlayersHTML(cs, failed), b.Me.Username)
+	} else {
+		msg = renderPlay(PlayersHTML(cs, cs.Players), b.Me.Username, m.Private())
 	}
-	msg := renderPlay(PlayersHTML(cs, cs.Players), b.Me.Username, m.Private())
-	b.Post(m.Chat, msg, tb.ModeHTML)
+	if _, ok := b.Post(m.Chat, msg, tb.ModeHTML); ok {
+		cs.LastBeginTime = time.Now().UTC()
+	}
 }

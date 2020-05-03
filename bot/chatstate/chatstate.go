@@ -15,9 +15,10 @@ type Card struct {
 }
 
 type ChatState struct {
-	Last    *tb.Message
-	Players []*tb.User
-	Card    Card
+	Last          *tb.Message // Last /play response.
+	LastBeginTime time.Time   // Last Begin (Play or Undelivered) response time.
+	Players       []*tb.User
+	Card          Card
 }
 
 func (cs *ChatState) Reset() {
