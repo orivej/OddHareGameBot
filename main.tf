@@ -60,7 +60,7 @@ resource "telegram_bot_commands" "a" {
     description = "Кто изображён на моём аватаре?"
     }, {
     command     = "aboutid"
-    description = "Откуда пошло выражение «ехать зайцем»?"
+    description = "Что значит «en lapin»?"
   }]
 }
 resource "telegram_bot_webhook" "a" {
