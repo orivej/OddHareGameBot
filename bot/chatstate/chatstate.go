@@ -6,8 +6,8 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-const Lifetime = 6 * time.Hour // How long is the ChatState usable after Last.Unixtime.
-const Locktime = time.Minute   // How long can a handler exclusively use a ChatState.
+const Lifetime = time.Hour   // How long is the ChatState usable after Last.Unixtime.
+const Locktime = time.Minute // How long can a handler exclusively use a ChatState.
 
 type Card struct {
 	Topic string
