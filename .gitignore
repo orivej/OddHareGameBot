@@ -1,4 +1,5 @@
+*.upx
+*.zip
 /.terraform*
 /terraform*
 /enlapin
-/enlapin.zip
