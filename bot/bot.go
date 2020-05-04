@@ -190,18 +190,29 @@ func (b *Bot) OnBtnBegin(c *tb.Callback) {
 	})
 	hare := cs.Players[frand.Intn(len(cs.Players))]
 	word := cs.Card.Words[frand.Intn(len(cs.Card.Words))]
-	var failed []*tb.User
+	type result struct {
+		player *tb.User
+		err    error
+	}
+	results := make(chan result, 1)
 	for _, player := range cs.Players {
 		msg := word
 		if player == hare {
 			msg = msgYouAreHare
 		}
-		_, err := b.Send(player, msg)
-		if err != nil {
-			if !(err == tb.ErrNotStartedByUser || err == tb.ErrBlockedByUser) {
-				e.Print(err)
-			}
-			failed = append(failed, player)
+		go func(player *tb.User) {
+			_, err := b.Send(player, msg)
+			results <- result{player, err}
+		}(player)
+	}
+	var failed []*tb.User
+	for range cs.Players {
+		r := <-results
+		if !(r.err == tb.ErrNotStartedByUser || r.err == tb.ErrBlockedByUser) {
+			e.Print(r.err)
+		}
+		if r.err != nil {
+			failed = append(failed, r.player)
 		}
 	}
 	var msg string
