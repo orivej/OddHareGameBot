@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/orivej/e"
 	"github.com/orivej/enlapin/bot"
@@ -50,10 +51,7 @@ func main() {
 	if *flPoll {
 		b.Start()
 	} else {
-		type Request struct {
-			Body string `json:"body"`
-		}
-		lambda.Start(func(req Request) error {
+		lambda.Start(func(req events.APIGatewayProxyRequest) error {
 			var u tb.Update
 			err = json.Unmarshal([]byte(req.Body), &u)
 			e.Exit(err)
